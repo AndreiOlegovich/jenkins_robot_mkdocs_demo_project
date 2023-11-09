@@ -1,0 +1,17 @@
+venv/
+dockerfiles/jenkins/.ssh
+dockerfiles/mkdocs/.ssh
+dockerfiles/nginx/.ssh
+keys/
+./keys
+var/
+./var
+
+venv\
+dockerfiles\jenkins\.ssh
+dockerfiles\mkdocs\.ssh
+dockerfiles\nginx\.ssh
+keys\
+.\keys
+var\
+.\var
