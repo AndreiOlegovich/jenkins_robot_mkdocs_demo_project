@@ -1,0 +1,47 @@
+FROM jenkins/jenkins:2.401.3
+
+USER root
+
+RUN apt-get -y update && apt-get install -y lsb-release
+
+RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
+  https://download.docker.com/linux/debian/gpg
+
+RUN echo "deb [arch=$(dpkg --print-architecture) \
+  signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
+  https://download.docker.com/linux/debian \
+  $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+  
+RUN apt-get -y update \
+  && apt-get install -y apt build-essential \
+  && apt-get install -y tree vim curl make wget iproute2 iputils-ping ssh \
+  && apt-get -y update && apt-get install -y docker-ce-cli
+
+RUN jenkins-plugin-cli --plugins "blueocean:1.26.0 docker-workflow:563.vd5d2e5c4007f"
+RUN jenkins-plugin-cli --plugins "docker-workflow:563.vd5d2e5c4007f"
+
+RUN mkdir -p /home/jenkins/.ssh
+RUN chown jenkins:jenkins -R /home/jenkins/.ssh
+RUN echo "jenkins:jenkins" | chpasswd
+
+
+COPY jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa
+COPY jenkins/.ssh/id_rsa.pub /home/jenkins/.ssh/id_rsa.pub
+COPY jenkins/.ssh/jenkins_rsa /home/jenkins/.ssh/jenkins_rsa
+COPY jenkins/.ssh/jenkins_rsa.pub /home/jenkins/.ssh/jenkins_rsa.pub
+COPY jenkins/.ssh/config /home/jenkins/.ssh/config
+RUN chown jenkins:jenkins -R /home/jenkins/.ssh/config
+
+COPY jenkins/.ssh/id_rsa /var/jenkins_home/.ssh/id_rsa
+COPY jenkins/.ssh/id_rsa.pub /var/jenkins_home/.ssh/id_rsa.pub
+COPY jenkins/.ssh/jenkins_rsa /var/jenkins_home/.ssh/jenkins_rsa
+COPY jenkins/.ssh/jenkins_rsa.pub /var/jenkins_home/.ssh/jenkins_rsa.pub
+COPY jenkins/.ssh/config /var/jenkins_home/.ssh/config
+RUN chmod 700 /var/jenkins_home/.ssh
+RUN chmod 600 /var/jenkins_home/.ssh*
+RUN chown jenkins:jenkins -R /var/jenkins_home/.ssh
+RUN chown jenkins:jenkins /var/jenkins_home/.ssh/config
+
+
+USER jenkins
+WORKDIR $HOME
