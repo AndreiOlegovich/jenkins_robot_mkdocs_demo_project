@@ -6,6 +6,10 @@ keys/
 ./keys
 var/
 ./var
+src/remoting.jar
+src/remoting/
+src/workspace/
+
 
 venv\
 dockerfiles\jenkins\.ssh
