@@ -41,7 +41,7 @@ Fill Field
   New Page    https://www.urn.su/qa/ui/basic_test/
   Fill Text  //input[@id="name1"]    topbicycle.ru
   Click    //input[@id="submit1"]
-  Get Title    ==    TopBicycle
+  Get Title    ==    TopBicycle.ru
   Close Browser
 
 
