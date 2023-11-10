@@ -75,7 +75,7 @@ RUN useradd -rm -d /home/jenkins -s /bin/bash jenkins
 COPY jenkins/.ssh/jenkins_rsa.pub /home/jenkins/.ssh/authorized_keys
 RUN chown -R jenkins:jenkins /home/jenkins/.ssh/authorized_keys
 # To allow pulling from github
-RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN ssh-keyscan github.com >> /home/jenkins/.ssh/known_hosts
 
 COPY robot/entrypoint.sh /home/jenkins/entrypoint.sh
 
