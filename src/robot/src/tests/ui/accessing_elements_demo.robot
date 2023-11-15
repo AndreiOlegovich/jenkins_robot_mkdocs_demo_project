@@ -29,6 +29,12 @@ Start Chromium Browser
 
 *** Test Cases ***
 
+Verify URN.SU title
+  [Tags]    title
+  New Page    https://www.urn.su
+  Get Title  ==  URN.SU
+  Close Browser
+
 Starting a browser with a page
   [Tags]    title
   New Page    https://www.urn.su/qa/ui/basic_test/
@@ -138,8 +144,3 @@ Upload File
   Upload File By Selector    //input[@type="file"]    heihei_logo.jpg
   Click    id=submit
   Get Title    ==    Success
-
-
-
-
-
