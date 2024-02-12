@@ -1,0 +1,85 @@
+# Dockerfile.mkdocs
+FROM ubuntu:22.04
+
+LABEL maintainer="www.urn.su"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update linux and install software
+
+RUN apt-get -qy update && \
+    # Install linux utils
+    apt-get install -qy apt && \
+    apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get install -qy ssh openssh-server && \
+    apt-get install -qy tree vim git && \
+    apt-get install -qy dialog && \
+    apt-get -qy update && \
+    # Install Python
+    apt-get install -y python3 python3-pip && \
+    apt-get install -y curl gcc g++ make && \
+    cd /usr/local/bin && \
+    ln -s /usr/bin/python3 python && \
+    python -m pip install --upgrade pip && \
+    # Install JDK 11 (latest stable edition)
+    apt-get install -qy openjdk-11-jdk && \
+    apt-get -qy autoremove
+
+
+# Create jenkins user and apply permissions
+RUN useradd -rm -d /home/jenkins -s /bin/bash jenkins && \
+    echo "jenkins:jenkins" | chpasswd && \
+    mkdir /home/jenkins/.m2 && \
+    chown -R jenkins:jenkins /home/jenkins/.m2 && \
+    mkdir /home/jenkins/.ssh && \
+    chown -R jenkins:jenkins /home/jenkins/.ssh && \
+    chmod 700 /home/jenkins/.ssh && \
+    mkdir -p /home/jenkins/mkdocs/documentation/site && \
+    chown -R jenkins:jenkins /home/jenkins/mkdocs && \
+    chown -R jenkins:jenkins /home/jenkins/mkdocs/documentation && \
+    chown -R jenkins:jenkins /home/jenkins/mkdocs/documentation/site && \
+    chmod 700 /home/jenkins/mkdocs
+
+
+# Copy keys and requirements
+COPY requirements.mkdocs.txt ./home/jenkins
+COPY mkdocs/.ssh/id_rsa.pub /root/.ssh/id_rsa.pub
+COPY mkdocs/.ssh/id_rsa /root/.ssh/id_rsa
+COPY mkdocs/.ssh/id_rsa /home/jenkins/.ssh/id_rsa
+COPY jenkins/.ssh/jenkins_rsa.pub /home/jenkins/.ssh/authorized_keys
+RUN chown -R jenkins:jenkins /home/jenkins/.ssh/authorized_keys
+RUN chown -R jenkins:jenkins /home/jenkins/.ssh/id_rsa
+RUN chmod 400 /home/jenkins/.ssh/id_rsa
+COPY jenkins/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+
+
+WORKDIR /home/jenkins
+RUN chmod 400 /root/.ssh/id_rsa
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN rm -rf github && \
+    mkdir github && \
+    chown -R jenkins:jenkins /home/jenkins/github
+
+USER jenkins
+
+# Install dependencies
+WORKDIR /home/jenkins
+RUN python -m pip install -r requirements.mkdocs.txt
+
+WORKDIR /home/jenkins/github
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts && \
+    git clone git@github.com:AndreiOlegovich/mkdocs-demo-project.git && \
+    chown -R jenkins:jenkins /home/jenkins/github/mkdocs-demo-project && \
+    chown -R jenkins:jenkins /home/jenkins/github/mkdocs-demo-project/docs && \
+    chmod 700 /home/jenkins/github/mkdocs-demo-project/docs
+
+WORKDIR /home/jenkins/github/mkdocs-demo-project
+# if copy is from windows convert entrypoint.sh to unix format with dos2unix util
+COPY mkdocs/entrypoint.sh /home/jenkins/github/mkdocs-demo-project
+RUN python -m mkdocs build
+
+USER root
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["/home/jenkins/github/mkdocs-demo-project/entrypoint.sh"]

@@ -1,0 +1,147 @@
+# docker-compose.yml
+version: '1.1'
+
+services:
+
+  nginx:
+    restart: always
+    privileged: true
+    user: root
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.nginx
+      args:
+        buildversion: 1
+    ports:
+      - "8001:80"
+    container_name: nginx
+    networks:
+      net3:
+        ipv4_address: 10.5.0.8
+      jenkins:
+        ipv4_address: 10.7.0.8
+    extra_hosts:
+      - "jenkins.andrei.com:10.7.0.6"
+      - "mkdocs.andrei.com:10.7.0.10"
+    volumes:
+      # Shared with MkDocs
+      - type: bind
+        source: ./var/share/site
+        target: /usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  jenkins:
+    # image specified in Dockerfile
+    # image: jenkins/jenkins:lts
+    restart: always
+    privileged: true
+    user: root
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.jenkins
+      args:
+        buildversion: 1
+        SSH_PRIVATE_KEY: ""
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      JAVA_OPTS: 
+        -Dhudson.model.DirectoryBrowserSupport.CSP="sandbox allow-same-origin allow-scripts; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:; style-src 'self' 'unsafe-inline' data:; font-src 'self'"
+    container_name: jenkins
+    networks:
+      net3:
+        ipv4_address: 10.5.0.6
+      jenkins:
+        ipv4_address: 10.7.0.6
+    extra_hosts:
+      - "nginx.andrei.com:10.7.0.8"
+      - "mkdocs.andrei.com:10.7.0.10"
+      - "robot.andrei.com:10.7.0.12"
+    volumes:
+      - ./var/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  mkdocs:
+    restart: always
+    privileged: true
+    user: root
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.mkdocs
+      args:
+        buildversion: 1
+    ports:
+      - "8002:8002"
+    container_name: mkdocs
+    networks:
+      net3:
+        ipv4_address: 10.5.0.10
+      jenkins:
+        ipv4_address: 10.7.0.10
+    extra_hosts:
+      - "jenkins.andrei.com:10.7.0.6"
+      - "nginx.andrei.com:10.7.0.8"
+    volumes:
+      # Shared with Nginx
+      - type: bind
+        source: ./var/share/site
+        target: /home/jenkins/mkdocs/documentation/site
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  flask_service:
+    build: flask_service
+    ports:
+      - "5000:5000"
+    networks:
+      net3:
+        ipv4_address: 10.5.0.14
+      jenkins:
+        ipv4_address: 10.7.0.14
+    extra_hosts:
+      - "jenkins.andrei.com:10.7.0.6"
+      - "nginx.andrei.com:10.7.0.8"
+      - "mkdocs.andrei.com:10.7.0.10"
+
+
+  robot_ubuntu:
+    container_name: robot_ubuntu
+    image: robot_ubuntu
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.ubuntu.robot
+      args:
+        buildversion: 1
+    ports:
+      - "3001:3001"
+    networks:
+      net3:
+        ipv4_address: 10.5.0.12
+      jenkins:
+        ipv4_address: 10.7.0.12
+    extra_hosts:
+      - "jenkins.andrei.com:10.7.0.6"
+      - "nginx.andrei.com:10.7.0.8"
+      - "mkdocs.andrei.com:10.7.0.10"
+    volumes:
+      - ./src:/opt
+    tty: true
+    command: tail -F /dev/null
+
+  
+networks:
+  net3:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16
+         gateway: 10.5.0.1
+  jenkins:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.7.0.0/16
+         gateway: 10.7.0.1
