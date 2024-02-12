@@ -5,3 +5,4 @@ dockerfiles/jenkins/.ssh/jenkins_rsa
 dockerfiles/jenkins/.ssh/jenkins_rsa.pub
 dockerfiles/mkdocs/.ssh/id_rsa
 dockerfiles/mkdocs/.ssh/id_rsa.pub
+var
