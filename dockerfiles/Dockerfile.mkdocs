@@ -1,7 +1,7 @@
 # Dockerfile.mkdocs
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
-LABEL maintainer="www.urn.su"
+LABEL maintainer="www.devhops.ru"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -11,19 +11,26 @@ RUN apt-get -qy update && \
     # Install linux utils
     apt-get install -qy apt && \
     apt-get -y update && \
-    apt-get -y upgrade && \
-    apt-get install -qy ssh openssh-server && \
+    apt-get -y upgrade
+# && \
+
+RUN apt-get install -qy apt-utils
+RUN apt-get install -qy ssh openssh-server && \
     apt-get install -qy tree vim git && \
     apt-get install -qy dialog && \
-    apt-get -qy update && \
-    # Install Python
-    apt-get install -y python3 python3-pip && \
-    apt-get install -y curl gcc g++ make && \
-    cd /usr/local/bin && \
-    ln -s /usr/bin/python3 python && \
-    python -m pip install --upgrade pip && \
-    # Install JDK 11 (latest stable edition)
-    apt-get install -qy openjdk-11-jdk && \
+    apt-get -qy update
+
+# Install Python
+RUN apt-get install -y python3 python3-pip python3-full pipx
+RUN apt-get install -y curl gcc g++ make
+RUN cd /usr/local/bin && \
+    ln -s /usr/bin/python3 python
+RUN apt -qy install python3.12-venv
+RUN python3 -m venv venv
+RUN . venv/bin/activate
+# RUN python3 -m pip install --upgrade pip
+# Install JDK 11 (latest stable edition)
+RUN apt-get install -qy openjdk-17-jdk && \
     apt-get -qy autoremove
 
 
@@ -65,19 +72,22 @@ USER jenkins
 
 # Install dependencies
 WORKDIR /home/jenkins
-RUN python -m pip install -r requirements.mkdocs.txt
+USER root
+RUN /venv/bin/python3 -m pip install -r requirements.mkdocs.txt
 
+# Clone repo
 WORKDIR /home/jenkins/github
-RUN ssh-keyscan github.com >> ~/.ssh/known_hosts && \
-    git clone git@github.com:AndreiOlegovich/mkdocs-demo-project.git && \
-    chown -R jenkins:jenkins /home/jenkins/github/mkdocs-demo-project && \
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN git clone git@github.com:AndreiOlegovich/mkdocs-demo-project.git
+RUN chown -R jenkins:jenkins /home/jenkins/github/mkdocs-demo-project && \
     chown -R jenkins:jenkins /home/jenkins/github/mkdocs-demo-project/docs && \
     chmod 700 /home/jenkins/github/mkdocs-demo-project/docs
 
+USER jenkins
 WORKDIR /home/jenkins/github/mkdocs-demo-project
 # if copy is from windows convert entrypoint.sh to unix format with dos2unix util
 COPY mkdocs/entrypoint.sh /home/jenkins/github/mkdocs-demo-project
-RUN python -m mkdocs build
+RUN /venv/bin/python3 -m mkdocs build
 
 USER root
 RUN chmod +x entrypoint.sh

@@ -1,8 +1,5 @@
 # docker-compose.yml
-version: '1.1'
-
 services:
-
   nginx:
     restart: always
     privileged: true
@@ -47,7 +44,7 @@ services:
       - "8080:8080"
       - "50000:50000"
     environment:
-      JAVA_OPTS: 
+      JAVA_OPTS:
         -Dhudson.model.DirectoryBrowserSupport.CSP="sandbox allow-same-origin allow-scripts; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:; style-src 'self' 'unsafe-inline' data:; font-src 'self'"
     container_name: jenkins
     networks:
@@ -96,6 +93,7 @@ services:
     build: flask_service
     ports:
       - "5000:5000"
+    container_name: flask
     networks:
       net3:
         ipv4_address: 10.5.0.14
@@ -112,7 +110,7 @@ services:
     image: robot_ubuntu
     build:
       context: ./dockerfiles
-      dockerfile: Dockerfile.ubuntu.robot
+      dockerfile: Dockerfile.ubuntu_robot
       args:
         buildversion: 1
     ports:

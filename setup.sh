@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt install -y dos2unix
+
 cp ./keys/jenkins/*rsa* ./dockerfiles/jenkins/.ssh
 cp ./keys/mkdocs/id_rsa* ./dockerfiles/mkdocs/.ssh
 

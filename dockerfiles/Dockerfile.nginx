@@ -1,5 +1,5 @@
 # Dockerfile.nginx
-FROM nginx:1.25
+FROM nginx:1.27.4
 
 LABEL maintainer="www.andreyolegovich.ru"
 
