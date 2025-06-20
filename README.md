@@ -2,7 +2,7 @@
 
 ## Precondition - SSH Keys
 
-Need to generate ssh keys for Jenkins and MkDocs
+Need to generate SSH keys for Jenkins and MkDocs
 
 Keys should be stored in ./keys/jenkins and ./keys/mkdocs directories
 
